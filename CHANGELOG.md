@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-04-28
+
+### Changed
+
+- **Modal document scroll lock:** replaced **`wirecnLockModalScroll`** / **`wirecnUnlockModalScroll`** with **`window.wirecnDialogScrollLock`** exposing **`lock()`** and **`unlock()`** (same depth-counted behaviour: save/restore **`document.documentElement`** and **`document.body`** overflow and scrollbar gutter). **`uiDialog`**, **`uiCommandDialog`**, and Livewire **`wire:model`** branches on **dialog**, **alert-dialog**, and **sheet** now call this API.
+
 ## [1.0.2] - 2026-04-28
 
 ### Added
 
 - **`scroll-area`:** optional `viewportRef` and `viewportAttributes` for Alpine/A11y on the viewport (used by the select listbox).
-- **`wirecnLockModalScroll` / `wirecnUnlockModalScroll`** on `window` (reference-counted): lock **`html`** / **`body`** overflow while a modal is open so the page behind does not scroll; restores scrollbar gutter via **`padding-right`** when needed.
+- **`wirecnLockModalScroll`** / **`wirecnUnlockModalScroll`** on **`window`** (reference-counted): lock **`html`** / **`body`** overflow while a modal is open so the page behind does not scroll; restores scrollbar gutter via **`padding-right`** when needed.
 
 ### Changed
 

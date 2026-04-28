@@ -209,39 +209,46 @@ function mapContextMenuPlacement(side, align) {
     return 'right-start';
 }
 
-(() => {
+window.wirecnDialogScrollLock = (() => {
     let depth = 0;
     let snapshot = null;
 
-    window.wirecnLockModalScroll = () => {
-        if (depth === 0) {
-            snapshot = {
-                htmlOverflow: document.documentElement.style.overflow,
-                bodyOverflow: document.body.style.overflow,
-                bodyPaddingRight: document.body.style.paddingRight,
-            };
-            const gap = window.innerWidth - document.documentElement.clientWidth;
+    return {
+        /**
+         * First lock saves `overflow` / `padding-right` on `documentElement` and `body`,
+         * then hides overflow. Nested dialogs increment depth so only the last `unlock`
+         * restores scroll (Alpine `destroy()` when still open must call `unlock()` once).
+         */
+        lock() {
+            if (depth === 0) {
+                snapshot = {
+                    htmlOverflow: document.documentElement.style.overflow,
+                    bodyOverflow: document.body.style.overflow,
+                    bodyPaddingRight: document.body.style.paddingRight,
+                };
+                const gap = window.innerWidth - document.documentElement.clientWidth;
 
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
 
-            if (gap > 0) {
-                document.body.style.paddingRight = `${gap}px`;
+                if (gap > 0) {
+                    document.body.style.paddingRight = `${gap}px`;
+                }
             }
-        }
 
-        depth += 1;
-    };
+            depth += 1;
+        },
 
-    window.wirecnUnlockModalScroll = () => {
-        depth = Math.max(0, depth - 1);
+        unlock() {
+            depth = Math.max(0, depth - 1);
 
-        if (depth === 0 && snapshot !== null) {
-            document.documentElement.style.overflow = snapshot.htmlOverflow;
-            document.body.style.overflow = snapshot.bodyOverflow;
-            document.body.style.paddingRight = snapshot.bodyPaddingRight;
-            snapshot = null;
-        }
+            if (depth === 0 && snapshot !== null) {
+                document.documentElement.style.overflow = snapshot.htmlOverflow;
+                document.body.style.overflow = snapshot.bodyOverflow;
+                document.body.style.paddingRight = snapshot.bodyPaddingRight;
+                snapshot = null;
+            }
+        },
     };
 })();
 
@@ -264,21 +271,21 @@ document.addEventListener('alpine:init', () => {
 
         init() {
             if (this.open) {
-                window.wirecnLockModalScroll?.();
+                window.wirecnDialogScrollLock?.lock();
             }
 
             this.$watch('open', (value) => {
                 if (value) {
-                    window.wirecnLockModalScroll?.();
+                    window.wirecnDialogScrollLock?.lock();
                 } else {
-                    window.wirecnUnlockModalScroll?.();
+                    window.wirecnDialogScrollLock?.unlock();
                 }
             });
         },
 
         destroy() {
             if (this.open) {
-                window.wirecnUnlockModalScroll?.();
+                window.wirecnDialogScrollLock?.unlock();
             }
         },
 
@@ -1930,24 +1937,24 @@ document.addEventListener('alpine:init', () => {
 
         init() {
             if (this.open) {
-                window.wirecnLockModalScroll?.();
+                window.wirecnDialogScrollLock?.lock();
             }
 
             this.$watch('open', async (value) => {
                 if (value) {
-                    window.wirecnLockModalScroll?.();
+                    window.wirecnDialogScrollLock?.lock();
                     await this.$nextTick();
                     const root = this.$refs.dialogContent;
                     root?.querySelector('[data-slot="command-input"]')?.focus();
                 } else {
-                    window.wirecnUnlockModalScroll?.();
+                    window.wirecnDialogScrollLock?.unlock();
                 }
             });
         },
 
         destroy() {
             if (this.open) {
-                window.wirecnUnlockModalScroll?.();
+                window.wirecnDialogScrollLock?.unlock();
             }
         },
     }));

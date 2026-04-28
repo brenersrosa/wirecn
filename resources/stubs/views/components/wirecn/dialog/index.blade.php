@@ -11,20 +11,20 @@
             },
             init() {
                 if (this.open) {
-                    window.wirecnLockModalScroll?.();
+                    window.wirecnDialogScrollLock?.lock();
                 }
 
                 this.$watch('open', (v) => {
                     if (v) {
-                        window.wirecnLockModalScroll?.();
+                        window.wirecnDialogScrollLock?.lock();
                     } else {
-                        window.wirecnUnlockModalScroll?.();
+                        window.wirecnDialogScrollLock?.unlock();
                     }
                 });
             },
             destroy() {
                 if (this.open) {
-                    window.wirecnUnlockModalScroll?.();
+                    window.wirecnDialogScrollLock?.unlock();
                 }
             },
         }"
