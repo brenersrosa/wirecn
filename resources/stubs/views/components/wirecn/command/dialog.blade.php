@@ -22,18 +22,18 @@
             x-show="open"
             x-cloak
             x-transition.opacity
-            class="fixed inset-0 z-50"
+            class="fixed left-0 top-0 z-50 h-[100vh] w-[100vw] max-h-[100vh] max-w-[100vw] overflow-hidden overscroll-contain"
             x-on:keydown.escape.window="close()"
             role="presentation"
         >
             <div
-                class="fixed inset-0 bg-black/80"
+                class="absolute inset-0 bg-black/80"
                 aria-hidden="true"
                 data-testid="command-dialog-backdrop"
                 x-on:click="close()"
             ></div>
             <div
-                class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-[min(33vh,12rem)]"
+                class="absolute inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain p-4 pt-[min(33vh,12rem)]"
                 role="presentation"
             >
                 <div

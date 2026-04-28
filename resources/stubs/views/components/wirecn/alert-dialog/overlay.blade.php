@@ -9,6 +9,6 @@
     x-transition:leave-end="opacity-0"
     aria-hidden="true"
     {{ $attributes->class(cn(
-        'fixed inset-0 isolate z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-sm',
+        'fixed left-0 top-0 isolate z-50 h-[100vh] w-[100vw] max-h-[100vh] max-w-[100vw] overflow-hidden overscroll-contain bg-black/10 supports-backdrop-filter:backdrop-blur-sm',
     )) }}
 ></div>

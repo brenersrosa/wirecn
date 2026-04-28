@@ -8,7 +8,7 @@
     aria-hidden="true"
     x-on:click="close()"
     {{ $attributes->class(cn(
-        'fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-[backdrop-filter]:backdrop-blur-sm',
+        'fixed left-0 top-0 isolate z-50 h-[100vh] w-[100vw] max-h-[100vh] max-w-[100vw] overflow-hidden overscroll-contain bg-black/10 duration-100 supports-[backdrop-filter]:backdrop-blur-sm',
         'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0',
     )) }}
 ></div>

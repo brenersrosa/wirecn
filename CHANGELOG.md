@@ -12,15 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`scroll-area`:** optional `viewportRef` and `viewportAttributes` for Alpine/A11y on the viewport (used by the select listbox).
+- **`wirecnLockModalScroll` / `wirecnUnlockModalScroll`** on `window` (reference-counted): lock **`html`** / **`body`** overflow while a modal is open so the page behind does not scroll; restores scrollbar gutter via **`padding-right`** when needed.
 
 ### Changed
 
 - **Select:** listbox panel teleported to `body` with **`bindFloatingSelectPanel`** (Floating UI `offset`, `flip`, `shift`, **`size`**), `floatingPanel` ref, `z-[100]`, flex layout, and **`x-wirecn.scroll-area`** for option scrolling; outside close via **`mousedown.window`** on the select root. Removed dedicated **`select/portal`** stub in favour of inline teleport.
+- **`uiDialog`** and **`uiCommandDialog`:** call the modal scroll lock when **`open`** is true; **`destroy`** unlocks if still open.
+- **Dialog / alert-dialog / sheet** (overlays and alert wrapper): explicit **`100vh` × `100vw`** with **`overflow-hidden`** / **`overscroll-contain`** so the portal layer matches the visual viewport, not the scrolled document height.
+- **Dialog content:** **`max-h-[calc(100vh-2rem)]`**, **`max-w-[calc(100vw-2rem)]`**, and scroll inside the panel when content is tall.
+- **Command dialog:** outer portal uses viewport box; backdrop and scroll region use **`absolute inset-0`** inside it.
+- **Dialog, alert-dialog, sheet** with **`wire:model`:** same **`init` / `$watch('open')` / `destroy`** hookup for scroll lock as **`uiDialog`**.
 
 ### Fixed
 
 - Select floating panel **`max-h-*` / `max-w-*`** on `<x-wirecn.select.content>` are respected again (merged with viewport bounds instead of being overridden by inline `size` output).
 - Listbox no longer clipped by modal/dialog **`overflow`** when using the new layer.
+- Modal portals no longer depend on the underlying document scroll for backdrop sizing; background scroll is disabled while dialogs are open.
 
 ## [1.0.1] - 2026-04-28
 

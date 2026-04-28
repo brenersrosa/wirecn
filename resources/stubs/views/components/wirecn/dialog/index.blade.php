@@ -9,6 +9,24 @@
             close() {
                 this.open = false;
             },
+            init() {
+                if (this.open) {
+                    window.wirecnLockModalScroll?.();
+                }
+
+                this.$watch('open', (v) => {
+                    if (v) {
+                        window.wirecnLockModalScroll?.();
+                    } else {
+                        window.wirecnUnlockModalScroll?.();
+                    }
+                });
+            },
+            destroy() {
+                if (this.open) {
+                    window.wirecnUnlockModalScroll?.();
+                }
+            },
         }"
         {{ $attributes->whereDoesntStartWith('wire:model')->class(cn('relative')) }}
     >

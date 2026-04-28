@@ -10,14 +10,14 @@
     <div
         x-show="open"
         x-cloak
-        class="{{ cn('fixed inset-0 z-50') }}"
+        class="{{ cn('fixed left-0 top-0 z-50 h-[100vh] w-[100vw] max-h-[100vh] max-w-[100vw] overflow-hidden overscroll-contain') }}"
         role="presentation"
         x-on:keydown.escape.window="close()"
     >
         <x-wirecn.alert-dialog.overlay />
 
         <div
-            class="{{ cn('pointer-events-none fixed inset-0 z-50 grid place-items-center p-4') }}"
+            class="{{ cn('pointer-events-none fixed left-0 top-0 z-50 grid h-[100vh] w-[100vw] max-h-[100vh] max-w-[100vw] place-items-center overflow-hidden p-4') }}"
             role="presentation"
         >
             <div
