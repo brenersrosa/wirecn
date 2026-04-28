@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "livecn/laravel-livecn",
-    "description": "Laravel Blade UI (livecn): components with Tailwind class merging via cn()",
+    "name": "wirecn/laravel-wirecn",
+    "description": "Laravel Blade UI (wirecn): components with Tailwind class merging via cn()",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -9,7 +9,7 @@
         "blade",
         "tailwind",
         "ui",
-        "livecn"
+        "wirecn"
     ],
     "require": {
         "php": "^8.3",
@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Livecn\\Laravel\\": "src/"
+            "Wirecn\\Laravel\\": "src/"
         },
         "files": [
             "src/helpers.php"
@@ -29,7 +29,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Livecn\\Laravel\\LaravelLivecnServiceProvider"
+                "Wirecn\\Laravel\\WirecnServiceProvider"
             ]
         }
     },

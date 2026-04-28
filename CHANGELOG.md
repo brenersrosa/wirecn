@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Package renamed from `livecn/laravel-livecn` to **`wirecn/laravel-wirecn`**; PHP namespace **`Wirecn\Laravel`**; Blade prefix **`x-wirecn.*`**; publish tags **`wirecn-views`** / **`wirecn-js`**.
+
 ## [0.1.0] - 2026-04-28
 
 ### Added
 
-- Initial release: `cn()` helper, `Livecn\Laravel\Support\UiIcon`, publishable Blade stubs (`livecn-views`) and JavaScript stubs (`livecn-js`).
+- Initial release (as livecn): `cn()` helper, `UiIcon`, publishable Blade and JS stubs.

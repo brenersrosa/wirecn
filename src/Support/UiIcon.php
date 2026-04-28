@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Livecn\Laravel\Support;
+namespace Wirecn\Laravel\Support;
 
 /**
  * Tamanhos por variante alinhados ao Flux UI (outline/solid 24px, mini 20px, micro 16px).
