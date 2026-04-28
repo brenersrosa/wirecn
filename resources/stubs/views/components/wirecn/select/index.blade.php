@@ -37,6 +37,7 @@
     x-data="uiSelect({{ \Illuminate\Support\Js::from($uiSelectConfig) }})"
     x-on:keydown="onKeydown($event)"
     x-on:keydown.escape.window="close()"
+    x-on:mousedown.window="onSelectPointerDownOutside($event)"
     {{ $rootAttributes->class(cn('relative w-full')) }}
 >
     <input

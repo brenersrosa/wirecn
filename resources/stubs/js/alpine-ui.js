@@ -1,7 +1,7 @@
 import EmblaCarousel from 'embla-carousel';
-import { arrow, autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom';
+import { arrow, autoUpdate, computePosition, flip, offset, shift, size } from '@floating-ui/dom';
 
-window.uiFloatingUi = { arrow, autoUpdate, computePosition, flip, offset, shift };
+window.uiFloatingUi = { arrow, autoUpdate, computePosition, flip, offset, shift, size };
 
 function bindFloatingMenu(referenceEl, floatingEl, placement, offsetOptions = { mainAxis: 4, crossAxis: 0 }, extra = {}) {
     const sameWidth = Boolean(extra.sameWidth);
@@ -32,6 +32,42 @@ function bindFloatingMenu(referenceEl, floatingEl, placement, offsetOptions = { 
 
 function bindFloating(referenceEl, floatingEl, placement = 'bottom-start') {
     return bindFloatingMenu(referenceEl, floatingEl, placement, { mainAxis: 4, crossAxis: 0 });
+}
+
+/** Select listbox: fixed layer + viewport bounds (modals / overflow). */
+function bindFloatingSelectPanel(referenceEl, floatingEl) {
+    const edgeMargin = 12;
+
+    return window.uiFloatingUi.autoUpdate(referenceEl, floatingEl, async () => {
+        const { x, y } = await window.uiFloatingUi.computePosition(referenceEl, floatingEl, {
+            placement: 'bottom-start',
+            middleware: [
+                window.uiFloatingUi.offset({ mainAxis: 4, crossAxis: 0 }),
+                window.uiFloatingUi.flip(),
+                window.uiFloatingUi.shift({ padding: 8 }),
+                window.uiFloatingUi.size({
+                    apply({ availableWidth, availableHeight, elements }) {
+                        Object.assign(elements.floating.style, {
+                            maxWidth: `${Math.max(0, availableWidth - edgeMargin)}px`,
+                            maxHeight: `${Math.max(0, availableHeight - edgeMargin)}px`,
+                        });
+                    },
+                }),
+            ],
+        });
+
+        const maxWidthPx = parseFloat(floatingEl.style.maxWidth);
+        const maxW = Number.isFinite(maxWidthPx) ? maxWidthPx : Number.POSITIVE_INFINITY;
+        const triggerW = referenceEl.offsetWidth;
+        const w = Math.min(Math.max(triggerW, 144), maxW);
+
+        Object.assign(floatingEl.style, {
+            position: 'fixed',
+            left: `${x}px`,
+            top: `${y}px`,
+            width: `${w}px`,
+        });
+    });
 }
 
 function bindFloatingTooltip(referenceEl, floatingEl, arrowEl, placement, offsetOptions = { mainAxis: 4, crossAxis: 0 }) {
@@ -614,39 +650,36 @@ document.addEventListener('alpine:init', () => {
         canScrollDown: false,
         scrollAffordanceObserver: null,
         affordanceOnResize: null,
-        cleanup: null,
-        _onOutsidePointerDown: null,
+        panelPositionCleanup: null,
 
-        _bindOutsidePointerDown() {
-            if (this._onOutsidePointerDown) {
-                return;
+        unbindPanelPosition() {
+            if (this.panelPositionCleanup) {
+                this.panelPositionCleanup();
+                this.panelPositionCleanup = null;
             }
 
-            this._onOutsidePointerDown = (e) => {
-                if (!this.panelOpen) {
-                    return;
-                }
+            const el = this.$refs.floatingPanel;
 
-                const ref = this.$refs.reference;
-                const fl = this.$refs.floating;
-
-                if (ref?.contains(e.target) || fl?.contains(e.target)) {
-                    return;
-                }
-
-                this.close();
-            };
-
-            document.addEventListener('pointerdown', this._onOutsidePointerDown, true);
+            if (el?.style) {
+                ['left', 'top', 'position', 'width', 'maxWidth', 'maxHeight'].forEach((prop) => {
+                    el.style.removeProperty(prop);
+                });
+            }
         },
 
-        _unbindOutsidePointerDown() {
-            if (!this._onOutsidePointerDown) {
+        onSelectPointerDownOutside(e) {
+            if (!this.panelOpen || this.disabled) {
                 return;
             }
 
-            document.removeEventListener('pointerdown', this._onOutsidePointerDown, true);
-            this._onOutsidePointerDown = null;
+            const ref = this.$refs.reference;
+            const panel = this.$refs.floatingPanel;
+
+            if (ref?.contains(e.target) || panel?.contains(e.target)) {
+                return;
+            }
+
+            this.close();
         },
 
         init() {
@@ -674,21 +707,19 @@ document.addEventListener('alpine:init', () => {
                     this.updateOptionAria();
 
                     await this.$nextTick();
-                    const ref = this.$refs.reference;
-                    const fl = this.$refs.floating;
+                    const refEl = this.$refs.reference;
+                    const panelEl = this.$refs.floatingPanel;
 
-                    if (ref && fl) {
-                        if (this.cleanup) {
-                            this.cleanup();
-                            this.cleanup = null;
-                        }
-
-                        this.cleanup = bindFloatingMenu(ref, fl, 'bottom-start', { mainAxis: 4, crossAxis: 0 }, { sameWidth: true });
+                    if (refEl && panelEl) {
+                        this.unbindPanelPosition();
+                        this.panelPositionCleanup = bindFloatingSelectPanel(refEl, panelEl);
                     }
 
-                    this._bindOutsidePointerDown();
-
                     await this.$nextTick();
+                    this.refreshOptions();
+                    this.setActiveToSelectedOrFirst();
+                    this.updateHighlight();
+                    this.updateOptionAria();
                     this.$refs.viewport?.focus({ preventScroll: true });
                     this.bindScrollAffordanceObserver();
                     requestAnimationFrame(() => {
@@ -696,12 +727,7 @@ document.addEventListener('alpine:init', () => {
                         requestAnimationFrame(() => this.updateScrollAffordances());
                     });
                 } else {
-                    this._unbindOutsidePointerDown();
-
-                    if (this.cleanup) {
-                        this.cleanup();
-                        this.cleanup = null;
-                    }
+                    this.unbindPanelPosition();
 
                     this.unbindScrollAffordanceObserver();
                     this.canScrollUp = false;
@@ -1038,13 +1064,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         destroy() {
-            this._unbindOutsidePointerDown();
-
-            if (this.cleanup) {
-                this.cleanup();
-                this.cleanup = null;
-            }
-
+            this.unbindPanelPosition();
             this.unbindScrollAffordanceObserver();
             this.stopScrollHover();
         },

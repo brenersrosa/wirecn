@@ -1,6 +1,17 @@
-<x-wirecn.select.portal>
+@php
+    $__selectListboxViewport = new \Illuminate\View\ComponentAttributeBag([
+        'x-bind:id' => 'listboxId',
+        'role' => 'listbox',
+        'tabindex' => '-1',
+        'x-on:keydown.stop' => 'onListboxKeydown($event)',
+        'x-on:scroll.passive' => 'updateScrollAffordances()',
+        'class' => 'scroll-my-1 overflow-x-hidden p-1 outline-none',
+    ]);
+@endphp
+
+<template x-teleport="body">
     <div
-        x-ref="floating"
+        x-ref="floatingPanel"
         x-show="panelOpen"
         x-cloak
         role="presentation"
@@ -13,22 +24,17 @@
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
         {{ $attributes->class(cn(
-            'z-50 min-w-36 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 dark:ring-border/60',
+            'fixed z-[100] flex min-h-0 flex-col overscroll-contain overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 dark:ring-border/60',
         )) }}
     >
         <x-wirecn.select.scroll-up-button />
-        <div
-            x-ref="viewport"
-            data-slot="select-viewport"
-            x-bind:id="listboxId"
-            role="listbox"
-            tabindex="-1"
-            x-on:keydown.stop="onListboxKeydown($event)"
-            x-on:scroll.passive="updateScrollAffordances()"
-            class="{{ cn('max-h-60 scroll-my-1 overflow-x-hidden overflow-y-auto p-1 outline-none') }}"
+        <x-wirecn.scroll-area
+            viewport-ref="viewport"
+            :viewport-attributes="$__selectListboxViewport"
+            class="min-h-0 min-w-0 flex-1"
         >
             {{ $slot }}
-        </div>
+        </x-wirecn.scroll-area>
         <x-wirecn.select.scroll-down-button />
     </div>
-</x-wirecn.select.portal>
+</template>
