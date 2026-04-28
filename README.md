@@ -16,7 +16,9 @@ composer require wirecn/laravel-wirecn:^1.0
 
 ### `minimum-stability: stable` + repositório `path`
 
-Sem tag Git, o Composer trata o pacote local como `dev-*`, o que **falha** com `minimum-stability: stable` no projecto consumidor. Este pacote declara **`"version": "1.0.0"`** no `composer.json` para repositórios **`path`** satisfazerem `^1.0` / `stable`. Em **Packagist**, a versão publicada vem da **tag Git** (`v1.0.0`, …); mantém o campo `version` alinhado com a última tag estável ou remove-o se usares só tags (recomendado na doc do Composer para pacotes só-VCS).
+**Packagist:** a versão vem **só das tags Git** (`v1.0.0`, …). Não usamos o campo `"version"` no `composer.json` do pacote — evita o erro do Packagist *“tag does not match version in composer.json”* quando a tag e o campo divergem.
+
+**Repositório `path`:** sem `"version"` no pacote, o Composer expõe normalmente `dev-main` (ou o nome do branch). Para satisfazer `^1.0` com `minimum-stability: stable`, podes usar alias no projecto consumidor, por exemplo: `"wirecn/laravel-wirecn": "dev-main as 1.0.0"` (ajusta o branch à tua cópia local).
 
 Publish **views** (required for the default workflow — components live in your app):
 

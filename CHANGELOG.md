@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-04-28
+
+### Fixed
+
+- Removed root `composer.json` **`version`** so Packagist no longer skips Git tags when the field and the tag disagree (e.g. tag `1.0.0` vs `1.0.1` in JSON).
+
 ## [1.0.0] - 2026-04-28
 
 First **stable** release as `wirecn/laravel-wirecn` — install with `composer require wirecn/laravel-wirecn:^1.0` (no `@dev`) once Packagist or your Git remote exposes tag **`v1.0.0`**.
