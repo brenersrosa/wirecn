@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-04-28
+
+### Added
+
+- **`scroll-area`:** optional `viewportRef` and `viewportAttributes` for Alpine/A11y on the viewport (used by the select listbox).
+
+### Changed
+
+- **Select:** listbox panel teleported to `body` with **`bindFloatingSelectPanel`** (Floating UI `offset`, `flip`, `shift`, **`size`**), `floatingPanel` ref, `z-[100]`, flex layout, and **`x-wirecn.scroll-area`** for option scrolling; outside close via **`mousedown.window`** on the select root. Removed dedicated **`select/portal`** stub in favour of inline teleport.
+
+### Fixed
+
+- Select floating panel **`max-h-*` / `max-w-*`** on `<x-wirecn.select.content>` are respected again (merged with viewport bounds instead of being overridden by inline `size` output).
+- Listbox no longer clipped by modal/dialog **`overflow`** when using the new layer.
+
 ## [1.0.1] - 2026-04-28
 
 ### Fixed
