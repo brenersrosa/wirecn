@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3.1] - 2026-04-28
+
+### Changed
+
+- **`wirecnDialogScrollLock`:** implementation reduced to **`html`** / **`body`** `overflow` save/restore only (no **`padding-right`** scrollbar compensation). Exposed as **`const wirecnDialogScrollLock`** plus **`window.wirecnDialogScrollLock`** for Blade / debug.
+- **`uiDialog`:** scroll lock wired with **`alpine:destroy`** on the root element (once) instead of Alpine **`destroy()`** on the data object; calls **`wirecnDialogScrollLock.lock()`** / **`unlock()`** from module scope.
+- **`uiCommandDialog`:** scroll lock removed (command palette no longer toggles document overflow).
+- **`bindFloatingMenu`:** dropped optional **`sameWidth`** / fifth-argument branch (back to fixed position + x/y only).
+- **`bindFloatingSelectPanel`:** **`size`** middleware sets **`maxHeight`** / **`maxWidth`** from available space with fixed padding and minimums; width from trigger vs **`maxWidth`**; removed **`getComputedStyle`** merge for Tailwind **`max-h-*`** on the panel.
+- **`uiSelect`:** clear floating panel inline styles with empty strings; drop redundant post-open **`refreshOptions`** pass; remove **`destroy()`** hook (position cleanup runs when the panel closes).
+
+### Fixed
+
+- Background page scroll while dialogs are open: lock/unlock flow aligned with Alpine lifecycle (**`alpine:destroy`**) so depth is not left inconsistent after Livewire navigation.
+
 ## [1.0.3] - 2026-04-28
 
 ### Changed

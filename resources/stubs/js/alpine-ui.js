@@ -3,9 +3,7 @@ import { arrow, autoUpdate, computePosition, flip, offset, shift, size } from '@
 
 window.uiFloatingUi = { arrow, autoUpdate, computePosition, flip, offset, shift, size };
 
-function bindFloatingMenu(referenceEl, floatingEl, placement, offsetOptions = { mainAxis: 4, crossAxis: 0 }, extra = {}) {
-    const sameWidth = Boolean(extra.sameWidth);
-
+function bindFloatingMenu(referenceEl, floatingEl, placement, offsetOptions = { mainAxis: 4, crossAxis: 0 }) {
     return window.uiFloatingUi.autoUpdate(referenceEl, floatingEl, async () => {
         const { x, y } = await window.uiFloatingUi.computePosition(referenceEl, floatingEl, {
             placement,
@@ -16,17 +14,11 @@ function bindFloatingMenu(referenceEl, floatingEl, placement, offsetOptions = { 
             ],
         });
 
-        const style = {
+        Object.assign(floatingEl.style, {
             position: 'fixed',
             left: `${x}px`,
             top: `${y}px`,
-        };
-
-        if (sameWidth) {
-            style.width = `${referenceEl.offsetWidth}px`;
-        }
-
-        Object.assign(floatingEl.style, style);
+        });
     });
 }
 
@@ -34,28 +26,11 @@ function bindFloating(referenceEl, floatingEl, placement = 'bottom-start') {
     return bindFloatingMenu(referenceEl, floatingEl, placement, { mainAxis: 4, crossAxis: 0 });
 }
 
-function maxCssLengthToPx(value) {
-    if (!value || value === 'none') {
-        return Number.POSITIVE_INFINITY;
-    }
-
-    const n = parseFloat(value);
-
-    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
-}
-
-/** Select listbox: fixed layer + viewport bounds (modals / overflow). */
+/**
+ * Listbox do `uiSelect`: fixed + largura do trigger; `size` evita estourar a viewport (scroll no `html`).
+ */
 function bindFloatingSelectPanel(referenceEl, floatingEl) {
-    const edgeMargin = 12;
-
     return window.uiFloatingUi.autoUpdate(referenceEl, floatingEl, async () => {
-        floatingEl.style.removeProperty('max-height');
-        floatingEl.style.removeProperty('max-width');
-
-        const cs = getComputedStyle(floatingEl);
-        const userMaxH = maxCssLengthToPx(cs.maxHeight);
-        const userMaxW = maxCssLengthToPx(cs.maxWidth);
-
         const { x, y } = await window.uiFloatingUi.computePosition(referenceEl, floatingEl, {
             placement: 'bottom-start',
             middleware: [
@@ -63,23 +38,22 @@ function bindFloatingSelectPanel(referenceEl, floatingEl) {
                 window.uiFloatingUi.flip(),
                 window.uiFloatingUi.shift({ padding: 8 }),
                 window.uiFloatingUi.size({
-                    apply({ availableWidth, availableHeight, elements }) {
-                        const availH = Math.max(0, availableHeight - edgeMargin);
-                        const availW = Math.max(0, availableWidth - edgeMargin);
+                    apply({ availableHeight, availableWidth, elements }) {
+                        const pad = 12;
+                        const maxH = Math.max(120, availableHeight - pad);
+                        const maxW = Math.max(160, availableWidth - pad);
 
                         Object.assign(elements.floating.style, {
-                            maxWidth: `${Math.min(availW, userMaxW)}px`,
-                            maxHeight: `${Math.min(availH, userMaxH)}px`,
+                            maxHeight: `${maxH}px`,
+                            maxWidth: `${maxW}px`,
                         });
                     },
                 }),
             ],
         });
 
-        const maxWidthPx = parseFloat(floatingEl.style.maxWidth);
-        const maxW = Number.isFinite(maxWidthPx) ? maxWidthPx : Number.POSITIVE_INFINITY;
-        const triggerW = referenceEl.offsetWidth;
-        const w = Math.min(Math.max(triggerW, 144), maxW);
+        const maxWStyle = parseFloat(floatingEl.style.maxWidth) || Number.POSITIVE_INFINITY;
+        const w = Math.min(Math.max(referenceEl.offsetWidth, 144), maxWStyle);
 
         Object.assign(floatingEl.style, {
             position: 'fixed',
@@ -209,31 +183,22 @@ function mapContextMenuPlacement(side, align) {
     return 'right-start';
 }
 
-window.wirecnDialogScrollLock = (() => {
+/**
+ * Bloqueia scroll de `document.documentElement` / `body` enquanto há pelo menos um diálogo WireCN aberto.
+ * Contador para empilhar vários modais (ex.: preset + filtros).
+ */
+const wirecnDialogScrollLock = (() => {
     let depth = 0;
-    let snapshot = null;
+    let htmlOverflow = '';
+    let bodyOverflow = '';
 
     return {
-        /**
-         * First lock saves `overflow` / `padding-right` on `documentElement` and `body`,
-         * then hides overflow. Nested dialogs increment depth so only the last `unlock`
-         * restores scroll (Alpine `destroy()` when still open must call `unlock()` once).
-         */
         lock() {
             if (depth === 0) {
-                snapshot = {
-                    htmlOverflow: document.documentElement.style.overflow,
-                    bodyOverflow: document.body.style.overflow,
-                    bodyPaddingRight: document.body.style.paddingRight,
-                };
-                const gap = window.innerWidth - document.documentElement.clientWidth;
-
+                htmlOverflow = document.documentElement.style.overflow;
+                bodyOverflow = document.body.style.overflow;
                 document.documentElement.style.overflow = 'hidden';
                 document.body.style.overflow = 'hidden';
-
-                if (gap > 0) {
-                    document.body.style.paddingRight = `${gap}px`;
-                }
             }
 
             depth += 1;
@@ -242,15 +207,15 @@ window.wirecnDialogScrollLock = (() => {
         unlock() {
             depth = Math.max(0, depth - 1);
 
-            if (depth === 0 && snapshot !== null) {
-                document.documentElement.style.overflow = snapshot.htmlOverflow;
-                document.body.style.overflow = snapshot.bodyOverflow;
-                document.body.style.paddingRight = snapshot.bodyPaddingRight;
-                snapshot = null;
+            if (depth === 0) {
+                document.documentElement.style.overflow = htmlOverflow;
+                document.body.style.overflow = bodyOverflow;
             }
         },
     };
 })();
+
+window.wirecnDialogScrollLock = wirecnDialogScrollLock;
 
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
@@ -269,28 +234,32 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('uiDialog', () => ({
         open: false,
 
+        close() {
+            this.open = false;
+        },
+
         init() {
             if (this.open) {
-                window.wirecnDialogScrollLock?.lock();
+                wirecnDialogScrollLock.lock();
             }
 
             this.$watch('open', (value) => {
                 if (value) {
-                    window.wirecnDialogScrollLock?.lock();
+                    wirecnDialogScrollLock.lock();
                 } else {
-                    window.wirecnDialogScrollLock?.unlock();
+                    wirecnDialogScrollLock.unlock();
                 }
             });
-        },
 
-        destroy() {
-            if (this.open) {
-                window.wirecnDialogScrollLock?.unlock();
-            }
-        },
-
-        close() {
-            this.open = false;
+            this.$el.addEventListener(
+                'alpine:destroy',
+                () => {
+                    if (this.open) {
+                        wirecnDialogScrollLock.unlock();
+                    }
+                },
+                { once: true },
+            );
         },
     }));
 
@@ -618,7 +587,7 @@ document.addEventListener('alpine:init', () => {
         syncPlacementFromFloating() {
             const fl = this.$refs.floating;
 
-            if (! fl?.dataset?.configSide) {
+            if (!fl?.dataset?.configSide) {
                 return;
             }
 
@@ -741,11 +710,11 @@ document.addEventListener('alpine:init', () => {
                 this.panelPositionCleanup = null;
             }
 
-            const el = this.$refs.floatingPanel;
+            const fl = this.$refs.floatingPanel;
 
-            if (el?.style) {
+            if (fl) {
                 ['left', 'top', 'position', 'width', 'maxWidth', 'maxHeight'].forEach((prop) => {
-                    el.style.removeProperty(prop);
+                    fl.style[prop] = '';
                 });
             }
         },
@@ -756,9 +725,9 @@ document.addEventListener('alpine:init', () => {
             }
 
             const ref = this.$refs.reference;
-            const panel = this.$refs.floatingPanel;
+            const fl = this.$refs.floatingPanel;
 
-            if (ref?.contains(e.target) || panel?.contains(e.target)) {
+            if (ref?.contains(e.target) || fl?.contains(e.target)) {
                 return;
             }
 
@@ -799,10 +768,6 @@ document.addEventListener('alpine:init', () => {
                     }
 
                     await this.$nextTick();
-                    this.refreshOptions();
-                    this.setActiveToSelectedOrFirst();
-                    this.updateHighlight();
-                    this.updateOptionAria();
                     this.$refs.viewport?.focus({ preventScroll: true });
                     this.bindScrollAffordanceObserver();
                     requestAnimationFrame(() => {
@@ -1144,12 +1109,6 @@ document.addEventListener('alpine:init', () => {
                 e.preventDefault();
                 this.close();
             }
-        },
-
-        destroy() {
-            this.unbindPanelPosition();
-            this.unbindScrollAffordanceObserver();
-            this.stopScrollHover();
         },
     }));
 
@@ -1936,26 +1895,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (this.open) {
-                window.wirecnDialogScrollLock?.lock();
-            }
-
             this.$watch('open', async (value) => {
-                if (value) {
-                    window.wirecnDialogScrollLock?.lock();
-                    await this.$nextTick();
-                    const root = this.$refs.dialogContent;
-                    root?.querySelector('[data-slot="command-input"]')?.focus();
-                } else {
-                    window.wirecnDialogScrollLock?.unlock();
+                if (!value) {
+                    return;
                 }
-            });
-        },
 
-        destroy() {
-            if (this.open) {
-                window.wirecnDialogScrollLock?.unlock();
-            }
+                await this.$nextTick();
+                const root = this.$refs.dialogContent;
+                root?.querySelector('[data-slot="command-input"]')?.focus();
+            });
         },
     }));
 
