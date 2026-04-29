@@ -7,6 +7,7 @@ function bindFloatingMenu(referenceEl, floatingEl, placement, offsetOptions = { 
     return window.uiFloatingUi.autoUpdate(referenceEl, floatingEl, async () => {
         const { x, y } = await window.uiFloatingUi.computePosition(referenceEl, floatingEl, {
             placement,
+            strategy: 'fixed',
             middleware: [
                 window.uiFloatingUi.offset(offsetOptions),
                 window.uiFloatingUi.flip(),
@@ -33,6 +34,7 @@ function bindFloatingSelectPanel(referenceEl, floatingEl) {
     return window.uiFloatingUi.autoUpdate(referenceEl, floatingEl, async () => {
         const { x, y } = await window.uiFloatingUi.computePosition(referenceEl, floatingEl, {
             placement: 'bottom-start',
+            strategy: 'fixed',
             middleware: [
                 window.uiFloatingUi.offset({ mainAxis: 4, crossAxis: 0 }),
                 window.uiFloatingUi.flip(),
@@ -86,6 +88,7 @@ function bindFloatingTooltip(referenceEl, floatingEl, arrowEl, placement, offset
             floatingEl,
             {
                 placement,
+                strategy: 'fixed',
                 middleware,
             },
         );

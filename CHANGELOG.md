@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3.2] - 2026-04-28
+
+### Fixed
+
+- **Floating UI + `position: fixed`:** pass **`strategy: 'fixed'`** to **`computePosition`** in **`bindFloatingSelectPanel`**, **`bindFloatingMenu`**, and **`bindFloatingTooltip`**. Teleported select listboxes and other fixed layers now align with the trigger when it sits inside a **transformed** ancestor (e.g. centred dialog); without this, coordinates assumed an absolute box and the panel could jump to a viewport corner.
+
 ## [1.0.3.1] - 2026-04-28
 
 ### Changed
