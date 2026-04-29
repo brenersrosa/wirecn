@@ -1,9 +1,7 @@
 <div
     data-slot="combobox-list"
-    role="listbox"
-    x-bind:id="listId"
     {{ $attributes->class(cn(
-        'max-h-60 scroll-py-1 overflow-y-auto overscroll-contain p-1',
+        'min-h-0 w-full scroll-py-1',
     )) }}
 >
     <template x-for="(item, index) in filtered" x-bind:key="String(item.value) + '-' + index">
