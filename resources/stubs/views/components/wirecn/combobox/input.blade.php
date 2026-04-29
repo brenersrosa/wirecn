@@ -16,6 +16,7 @@
 
 <div
     data-slot="input-group"
+    x-ref="reference"
     {{ $attributes->class(cn(
         'group/input-group flex h-8 min-w-0 w-auto max-w-full items-stretch overflow-hidden rounded-md border border-input bg-background text-sm shadow-xs transition-[color,box-shadow]',
         'has-[:focus-visible]:border-ring has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50',

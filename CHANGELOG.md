@@ -7,38 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`x-wirecn.combobox.content`:** aligned with the select — **`x-teleport="body"`**, **`fixed`**, **`z-[100]`**, **`wire:ignore`**, **`x-ref="floatingPanel"`**, class merge via **`cn(..., $attributes->get('class'))`** + **`except('class')`**, **`x-transition.opacity.duration.100ms`**, **`transitionend`** to clear styles after close.
+- **`uiCombobox`:** positioning via **`bindFloatingSelectPanel`** (same viewport **`flip` / `shift`** pipeline), **`x-ref="reference"`** on the input group (fallback **`input`**), **`mousedown.window`** outside **reference** + **floatingPanel** instead of **`pointerdown`** on `document`.
+
+### Fixed
+
+- **`bindFloatingSelectPanel`:** **`visibility: hidden`** until the first **`left` / `top`** application so the panel is not visible in the corner before Floating UI positions it.
+- **`x-wirecn.select.content`:** transition aligned with the combobox — **`x-transition.opacity.duration.100ms`** instead of separate **`enter` / `leave`** blocks (**opacity** only, no **scale**).
+
 ## [1.0.3.7] - 2026-04-28
 
 ### Fixed
 
-- **`uiSelect`:** ao fechar, o **`autoUpdate`** do Floating UI para logo; a limpeza de **`left` / `top` / `position`** no painel só corre no **`transitionend`** de **`opacity`** no próprio **`floatingPanel`** (com **`panelOpen`** já falso), alinhado ao fim real do **`x-transition:leave`** — evita painel **`fixed`** sem coordenadas visível no canto e fechos espúrios por **`mousedown`** fora, sem **`setTimeout`** acoplado à duração CSS.
+- **`uiSelect`:** on close, Floating UI **`autoUpdate`** stops immediately; **`left` / `top` / `position`** cleanup on the panel runs only on **`opacity`** **`transitionend`** on **`floatingPanel`** itself (with **`panelOpen`** already false), matching the real end of **`x-transition:leave`** — avoids a **`fixed`** panel with no coordinates visible in the corner and spurious closes from **`mousedown`** outside, with no **`setTimeout`** tied to CSS duration.
 
 ## [1.0.3.6] - 2026-04-28
 
 ### Fixed
 
-- **`wirecnDialogScrollLock`:** além de `overflow: hidden` em `html`/`body`, aplica-se **`overscroll-behavior: none`**, **`touch-action: none`** no `body`, e — quando **`window.scrollY > 0`** — **`position: fixed`** no `body` com **`top: -scrollY`** para congelar o scroll da página; no `unlock` restaura-se tudo e chama-se **`window.scrollTo(0, scrollY)`**. Contentores de scroll da app (ex.: `main` com **`overflow-y-auto`**) podem declarar **`data-wirecn-scroll-lock`** para receberem o mesmo bloqueio enquanto um dialog/sheet estiver aberto.
+- **`wirecnDialogScrollLock`:** in addition to **`overflow: hidden`** on **`html` / `body`**, applies **`overscroll-behavior: none`**, **`touch-action: none`** on **`body`**, and — when **`window.scrollY > 0`** — **`position: fixed`** on **`body`** with **`top: -scrollY`** to freeze page scroll; **`unlock`** restores everything and calls **`window.scrollTo(0, scrollY)`**. App scroll containers (e.g. **`main`** with **`overflow-y-auto`**) may set **`data-wirecn-scroll-lock`** to receive the same lock while a dialog or sheet is open.
 
 ## [1.0.3.5] - 2026-04-28
 
 ### Fixed
 
-- **Select / Floating UI:** `flip` e `shift` do painel usam **`boundary`** = retângulo do **Visual Viewport** (ou `documentElement.clientWidth`/`Height`) + **`rootBoundary: 'viewport'`**, em vez de confiar só em **`clippingAncestors`** do trigger — assim o espaço útil é o **ecrã**, não a caixa do dialog com **`overflow-y-auto` / `overflow: hidden`**, e o painel abre para **cima** junto ao fundo da página quando falta espaço por baixo.
-- **Select:** posicionamento só depois de **dois `requestAnimationFrame`** e até **20** tentativas enquanto **`getBoundingClientRect().height < 1`** (evita medir com **`x-show`** ainda sem layout); transições do painel passam a **só opacidade** (sem **`scale-95`**), para o Floating UI não subestimar a altura durante a animação.
+- **Select / Floating UI:** panel **`flip`** and **`shift`** use **`boundary`** = **Visual Viewport** rectangle (or `documentElement.clientWidth` / `Height`) + **`rootBoundary: 'viewport'`**, instead of relying only on the trigger’s **`clippingAncestors`** — usable space is the **screen**, not the dialog box with **`overflow-y-auto` / `overflow: hidden`**, and the panel flips **upward** near the bottom of the page when there is not enough room below.
+- **Select:** positioning only after **two `requestAnimationFrame`** ticks and up to **20** retries while **`getBoundingClientRect().height < 1`** (avoids measuring while **`x-show`** has no layout yet); panel transitions are **opacity-only** (no **`scale-95`**) so Floating UI does not underestimate height during the animation.
 
 ## [1.0.3.4] - 2026-04-28
 
 ### Changed
 
-- **Select (`x-wirecn.select.content`):** listbox volta a **`x-teleport="body"`** com **`fixed`**, **`z-[100]`** (acima de dialogs/sheets em **`z-50`**), **`wire:ignore`**, transições explícitas e **`x-ref="floatingPanel"`**. Classes base incluem **`max-h-[min(24rem,calc(100dvh-2rem))]`**; o consumidor pode sobrescrever com **`class="..."`** — merge via **`cn(..., $attributes->get('class'))`** + **`except('class')`** para o tailwind-merge resolver conflitos (ex.: **`max-h-40`**).
-- **`bindFloatingSelectPanel`:** **`strategy: 'fixed'`**, **`offset`**, **`flip({ padding: 8 })`** (abre para cima junto ao fundo do viewport quando necessário), **`shift({ padding: 8 })`**; sem middleware **`size`** a definir altura em estilo inline. Largura do painel alinhada ao trigger (mín. 144px) com respeito a **`max-width`** (inline ou computado).
-- **`uiSelect`:** posicionamento com **`autoUpdate`**, **`unbindPanelPosition`** ao fechar; **`onSelectPointerDownOutside`** considera **`reference`** e **`floatingPanel`**.
+- **Select (`x-wirecn.select.content`):** listbox back to **`x-teleport="body"`** with **`fixed`**, **`z-[100]`** (above dialogs/sheets at **`z-50`**), **`wire:ignore`**, explicit transitions, and **`x-ref="floatingPanel"`**. Base classes include **`max-h-[min(24rem,calc(100dvh-2rem))]`**; consumers can override with **`class="..."`** — merge via **`cn(..., $attributes->get('class'))`** + **`except('class')`** so tailwind-merge resolves conflicts (e.g. **`max-h-40`**).
+- **`bindFloatingSelectPanel`:** **`strategy: 'fixed'`**, **`offset`**, **`flip({ padding: 8 })`** (opens upward near the bottom of the viewport when needed), **`shift({ padding: 8 })`**; no **`size`** middleware writing height as inline style. Panel width tracks the trigger (min 144px) respecting **`max-width`** (inline or computed).
+- **`uiSelect`:** positioning with **`autoUpdate`**, **`unbindPanelPosition`** on close; **`onSelectPointerDownOutside`** considers **`reference`** and **`floatingPanel`**.
 
 ## [1.0.3.3] - 2026-04-28
 
 ### Changed
 
-- **Select:** listbox de volta **no DOM do componente** (`absolute top-full`, `wire:ignore`) em vez de **`x-teleport="body"`** + posicionamento Floating UI; removidos **`bindFloatingSelectPanel`**, cleanup do painel e **`x-ref="floatingPanel"`**; **`onSelectPointerDownOutside`** volta a usar **`this.$el.contains`** para cliques fora. Menus e tooltips mantêm **`strategy: 'fixed'`** onde ainda usam camada fixa.
+- **Select:** listbox back **in the component DOM** (`absolute top-full`, `wire:ignore`) instead of **`x-teleport="body"`** + Floating UI positioning; removed **`bindFloatingSelectPanel`**, panel cleanup, and **`x-ref="floatingPanel"`**; **`onSelectPointerDownOutside`** again uses **`this.$el.contains`** for outside clicks. Menus and tooltips keep **`strategy: 'fixed'`** where they still use a fixed layer.
 
 ## [1.0.3.2] - 2026-04-28
 

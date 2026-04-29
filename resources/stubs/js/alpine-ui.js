@@ -63,11 +63,17 @@ function floatingSelectOverflowMiddlewareOptions() {
 }
 
 /**
- * Listbox do `uiSelect`: `fixed` + largura do trigger; `flip`/`shift` relativos ao **viewport** (não ao dialog).
- * Sem middleware `size` a escrever altura em inline style (fica a cargo das classes Tailwind no painel).
+ * Painel ancorado (`uiSelect` / `uiCombobox`): `fixed` + largura do trigger; `flip`/`shift` ao **viewport**.
+ * Até à primeira posição válida usa `visibility: hidden` para evitar flash no canto. Sem middleware `size` em altura.
  */
 function bindFloatingSelectPanel(referenceEl, floatingEl) {
+    let hasPositioned = false;
+
     return window.uiFloatingUi.autoUpdate(referenceEl, floatingEl, async () => {
+        if (!hasPositioned) {
+            floatingEl.style.visibility = 'hidden';
+        }
+
         const overflow = floatingSelectOverflowMiddlewareOptions();
 
         const { x, y } = await window.uiFloatingUi.computePosition(referenceEl, floatingEl, {
@@ -102,7 +108,9 @@ function bindFloatingSelectPanel(referenceEl, floatingEl) {
             left: `${x}px`,
             top: `${y}px`,
             width: `${w}px`,
+            visibility: 'visible',
         });
+        hasPositioned = true;
     });
 }
 
@@ -839,7 +847,7 @@ document.addEventListener('alpine:init', () => {
             const fl = this.$refs.floatingPanel;
 
             if (fl) {
-                ['left', 'top', 'position', 'width', 'maxWidth', 'maxHeight'].forEach((prop) => {
+                ['left', 'top', 'position', 'width', 'maxWidth', 'maxHeight', 'visibility'].forEach((prop) => {
                     fl.style[prop] = '';
                 });
             }
@@ -1294,6 +1302,62 @@ document.addEventListener('alpine:init', () => {
         inputId: '',
         listId: '',
         disabled: Boolean(options?.disabled),
+        panelPositionCleanup: null,
+
+        comboboxAnchorEl() {
+            return this.$refs.reference ?? this.$refs.input ?? null;
+        },
+
+        stopPanelFloatingUpdates() {
+            if (this.panelPositionCleanup) {
+                this.panelPositionCleanup();
+                this.panelPositionCleanup = null;
+            }
+        },
+
+        clearPanelFloatingStyles() {
+            const fl = this.$refs.floatingPanel;
+
+            if (fl) {
+                ['left', 'top', 'position', 'width', 'maxWidth', 'maxHeight', 'visibility'].forEach((prop) => {
+                    fl.style[prop] = '';
+                });
+            }
+        },
+
+        unbindPanelPosition() {
+            this.stopPanelFloatingUpdates();
+            this.clearPanelFloatingStyles();
+        },
+
+        onFloatingPanelTransitionEnd(e) {
+            const fl = this.$refs.floatingPanel;
+
+            if (!fl || e.target !== fl || e.propertyName !== 'opacity') {
+                return;
+            }
+
+            if (this.open) {
+                return;
+            }
+
+            this.clearPanelFloatingStyles();
+        },
+
+        onComboboxPointerDownOutside(e) {
+            if (!this.open || this.disabled) {
+                return;
+            }
+
+            const ref = this.comboboxAnchorEl();
+            const fl = this.$refs.floatingPanel;
+
+            if (ref?.contains(e.target) || fl?.contains(e.target)) {
+                return;
+            }
+
+            this.close();
+        },
 
         init() {
             const raw = options?.items ?? [];
@@ -1350,21 +1414,7 @@ document.addEventListener('alpine:init', () => {
             };
             window.addEventListener('ui-combobox:request-open', this._onUiComboboxRequestOpen);
 
-            // Fecha ao interagir fora (captura: funciona bem em células PowerGrid, mousedown na lista, etc.)
-            this._onDocumentPointerDown = (e) => {
-                if (!this.open || this.disabled) {
-                    return;
-                }
-
-                if (this.$el.contains(e.target)) {
-                    return;
-                }
-
-                this.close();
-            };
-            document.addEventListener('pointerdown', this._onDocumentPointerDown, true);
-
-            this.$watch('open', (value) => {
+            this.$watch('open', async (value) => {
                 if (value) {
                     window.dispatchEvent(
                         new CustomEvent('ui-combobox:request-open', {
@@ -1372,6 +1422,44 @@ document.addEventListener('alpine:init', () => {
                             detail: { id: this.inputId },
                         }),
                     );
+
+                    await this.$nextTick();
+
+                    const bindWhenLaidOut = (attempt) => {
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                if (!this.open) {
+                                    return;
+                                }
+
+                                const refEl = this.comboboxAnchorEl();
+                                const panelEl = this.$refs.floatingPanel;
+
+                                if (!refEl || !panelEl) {
+                                    return;
+                                }
+
+                                const { height } = panelEl.getBoundingClientRect();
+
+                                if (height < 1 && attempt < 20) {
+                                    bindWhenLaidOut(attempt + 1);
+
+                                    return;
+                                }
+
+                                this.unbindPanelPosition();
+                                this.panelPositionCleanup = bindFloatingSelectPanel(refEl, panelEl);
+
+                                this.$nextTick(() => {
+                                    this.$refs.input?.focus({ preventScroll: true });
+                                });
+                            });
+                        });
+                    };
+
+                    bindWhenLaidOut(0);
+                } else {
+                    this.stopPanelFloatingUpdates();
                 }
             });
 
@@ -1501,9 +1589,8 @@ document.addEventListener('alpine:init', () => {
                 window.removeEventListener('ui-combobox:request-open', this._onUiComboboxRequestOpen);
             }
 
-            if (this._onDocumentPointerDown) {
-                document.removeEventListener('pointerdown', this._onDocumentPointerDown, true);
-            }
+            this.stopPanelFloatingUpdates();
+            this.clearPanelFloatingStyles();
         },
     }));
 

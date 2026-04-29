@@ -38,6 +38,7 @@
     data-slot="combobox"
     {{ $rootAttributes->class(cn('relative w-full max-w-sm')) }}
     x-on:keydown="onKeydown($event)"
+    x-on:mousedown.window="onComboboxPointerDownOutside($event)"
 >
     @if ($needsHidden)
         <input
