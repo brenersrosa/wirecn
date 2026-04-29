@@ -713,6 +713,61 @@ document.addEventListener('alpine:init', () => {
             this.open = false;
         },
 
+        /**
+         * Fecha o menu ao escolher um item (evita painel aberto sob um dialog).
+         * Ignora submenu trigger e itens disabled; corre em bubble após o handler do item.
+         */
+        closeOnMenuItemSelect(e) {
+            if (!this.open) {
+                return;
+            }
+
+            const item = e.target?.closest?.(
+                '[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"]',
+            );
+
+            if (!item) {
+                return;
+            }
+
+            if (item.closest('[data-slot="dropdown-menu-sub-trigger"]')) {
+                return;
+            }
+
+            if (item.disabled || item.getAttribute('aria-disabled') === 'true' || item.hasAttribute('data-disabled')) {
+                return;
+            }
+
+            this.close();
+        },
+
+        _isPointerEventOutsideDropdownMenu(e) {
+            const ref = this.$refs.reference;
+            const fl = this.$refs.floating;
+
+            if (!ref && !fl) {
+                return false;
+            }
+
+            const path = typeof e.composedPath === 'function' ? e.composedPath() : [e.target];
+
+            for (const node of path) {
+                if (!(node instanceof Node)) {
+                    continue;
+                }
+
+                if (ref && (node === ref || ref.contains(node))) {
+                    return false;
+                }
+
+                if (fl && (node === fl || fl.contains(node))) {
+                    return false;
+                }
+            }
+
+            return true;
+        },
+
         _bindOutsidePointerDown() {
             if (this._onOutsidePointerDown) {
                 return;
@@ -723,10 +778,7 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
-                const ref = this.$refs.reference;
-                const fl = this.$refs.floating;
-
-                if (ref?.contains(e.target) || fl?.contains(e.target)) {
+                if (!this._isPointerEventOutsideDropdownMenu(e)) {
                     return;
                 }
 
@@ -734,6 +786,7 @@ document.addEventListener('alpine:init', () => {
             };
 
             document.addEventListener('pointerdown', this._onOutsidePointerDown, true);
+            document.addEventListener('click', this._onOutsidePointerDown, true);
         },
 
         _unbindOutsidePointerDown() {
@@ -742,6 +795,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             document.removeEventListener('pointerdown', this._onOutsidePointerDown, true);
+            document.removeEventListener('click', this._onOutsidePointerDown, true);
             this._onOutsidePointerDown = null;
         },
 
