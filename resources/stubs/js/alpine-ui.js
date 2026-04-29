@@ -762,6 +762,37 @@ document.addEventListener('alpine:init', () => {
             this.open = false;
         },
 
+        stopPanelFloatingUpdates() {
+            if (this.cleanup) {
+                this.cleanup();
+                this.cleanup = null;
+            }
+        },
+
+        clearPanelFloatingStyles() {
+            const fl = this.$refs.floating;
+
+            if (fl) {
+                ['left', 'top', 'position', 'width', 'maxWidth', 'maxHeight', 'visibility'].forEach((prop) => {
+                    fl.style[prop] = '';
+                });
+            }
+        },
+
+        onFloatingPanelTransitionEnd(e) {
+            const fl = this.$refs.floating;
+
+            if (!fl || e.target !== fl || e.propertyName !== 'opacity') {
+                return;
+            }
+
+            if (this.open) {
+                return;
+            }
+
+            this.clearPanelFloatingStyles();
+        },
+
         /**
          * Fecha o menu ao escolher um item (evita painel aberto sob um dialog).
          * Ignora submenu trigger e itens disabled; corre em bubble após o handler do item.
@@ -921,11 +952,7 @@ document.addEventListener('alpine:init', () => {
                     }
                 } else {
                     this._unbindOutsidePointerDown();
-
-                    if (this.cleanup) {
-                        this.cleanup();
-                        this.cleanup = null;
-                    }
+                    this.stopPanelFloatingUpdates();
                 }
             });
         },
@@ -938,10 +965,8 @@ document.addEventListener('alpine:init', () => {
                 this._onOtherDropdownOpened = null;
             }
 
-            if (this.cleanup) {
-                this.cleanup();
-                this.cleanup = null;
-            }
+            this.stopPanelFloatingUpdates();
+            this.clearPanelFloatingStyles();
         },
     }));
 
