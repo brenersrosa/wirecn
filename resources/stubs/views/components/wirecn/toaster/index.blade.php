@@ -1,8 +1,8 @@
 {{--
     Toaster estilo Sonner: incluir uma vez no layout (ex. após <body>).
-    JS: toast.success('…'), toast.warning, toast.error, toast.info, toast.loading; toast.dismiss(id).
-    Livewire: $this->dispatch('wirecn-toast', type: 'success', message: '…', description: null, duration: 4000);
-    Evento: window.dispatchEvent(new CustomEvent('wirecn-toast', { detail: { type: 'error', message: '…' } }));
+    JS: toast.success('…'), toast.warning, toast.error, toast.info, toast.loading; toast.dismiss(id). Durações por defeito (ms): success/info 5000, warning 6000, error 8000, loading 10000; `duration: false` desliga.
+    Livewire: $this->dispatch('wirecn-toast', type: 'success', message: '…', description: null, duration: 4000); só `Livewire.on` (evita duplicar com evento DOM).
+    Sem Livewire: `document.dispatchEvent(new CustomEvent('wirecn-toast', { bubbles: true, detail: { type: 'error', message: '…' } }))`.
 --}}
 @props([
     'position' => 'bottom-right',

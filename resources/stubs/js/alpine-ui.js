@@ -366,12 +366,12 @@ document.addEventListener('alpine:init', () => {
     const wirecnToastDismissTimers = new Map();
 
     const wirecnToastDefaultDuration = {
-        default: 4000,
-        success: 4000,
-        warning: 5000,
-        error: 6000,
-        info: 4000,
-        loading: null,
+        default: 5000,
+        success: 5000,
+        warning: 6000,
+        error: 8000,
+        info: 5000,
+        loading: 10000,
     };
 
     Alpine.store('wirecnToast', {
@@ -402,7 +402,7 @@ document.addEventListener('alpine:init', () => {
             let duration = durationOverride;
 
             if (duration === undefined) {
-                duration = wirecnToastDefaultDuration[v] ?? (v === 'loading' ? null : 4000);
+                duration = wirecnToastDefaultDuration[v] ?? 5000;
             }
 
             if (duration === false) {
@@ -447,6 +447,9 @@ document.addEventListener('alpine:init', () => {
         return null;
     }
 
+    let wirecnToastDedupeKey = '';
+    let wirecnToastDedupeUntil = 0;
+
     function wirecnToastDispatchFromPayload(detail) {
         const p =
             detail != null && typeof detail === 'object' && !Array.isArray(detail)
@@ -469,6 +472,17 @@ document.addEventListener('alpine:init', () => {
         if (!t || typeof t[type] !== 'function') {
             return;
         }
+
+        /** Livewire pode entregar o mesmo dispatch a `Livewire.on` e a um `CustomEvent` no documento. */
+        const dedupeKey = `${type}\0${String(message)}\0${String(options.description ?? '')}`;
+        const now = typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now();
+
+        if (dedupeKey === wirecnToastDedupeKey && now < wirecnToastDedupeUntil) {
+            return;
+        }
+
+        wirecnToastDedupeKey = dedupeKey;
+        wirecnToastDedupeUntil = now + 150;
 
         return t[type](message, options);
     }
@@ -519,16 +533,40 @@ document.addEventListener('alpine:init', () => {
         },
     };
 
-    document.addEventListener('wirecn-toast', (e) => {
+    const wirecnToastBridgeFromEvent = (e) => {
         wirecnToastDispatchFromPayload(e.detail);
-    });
+    };
+
+    let wirecnToastDomBridgeAttached = false;
+
+    function wirecnToastAttachDomBridge() {
+        if (wirecnToastDomBridgeAttached) {
+            return;
+        }
+
+        document.addEventListener('wirecn-toast', wirecnToastBridgeFromEvent);
+        wirecnToastDomBridgeAttached = true;
+    }
+
+    function wirecnToastDetachDomBridge() {
+        if (!wirecnToastDomBridgeAttached) {
+            return;
+        }
+
+        document.removeEventListener('wirecn-toast', wirecnToastBridgeFromEvent);
+        wirecnToastDomBridgeAttached = false;
+    }
+
+    let wirecnToastLivewireHooked = false;
 
     const registerWirecnToastLivewire = () => {
         const LW = window.Livewire;
 
-        if (!LW || typeof LW.on !== 'function') {
+        if (!LW || typeof LW.on !== 'function' || wirecnToastLivewireHooked) {
             return;
         }
+
+        wirecnToastLivewireHooked = true;
 
         LW.on('wirecn-toast', (event) => {
             const raw =
@@ -546,10 +584,20 @@ document.addEventListener('alpine:init', () => {
         });
     };
 
+    document.addEventListener(
+        'livewire:init',
+        () => {
+            registerWirecnToastLivewire();
+            wirecnToastDetachDomBridge();
+        },
+        { once: true },
+    );
+
     if (window.Livewire?.on) {
         registerWirecnToastLivewire();
+        wirecnToastDetachDomBridge();
     } else {
-        document.addEventListener('livewire:init', registerWirecnToastLivewire);
+        wirecnToastAttachDomBridge();
     }
 
     Alpine.data('uiDialog', () => ({
@@ -691,6 +739,7 @@ document.addEventListener('alpine:init', () => {
         cleanup: null,
         _dropdownMenuId: null,
         _onOutsidePointerDown: null,
+        _onForeignDropdownTriggerPointerDown: null,
         _onOtherDropdownOpened: null,
         placement: mapContextMenuPlacement(config.side ?? 'bottom', config.align ?? 'start'),
         alignOffset: Number(config.alignOffset ?? 0),
@@ -785,18 +834,42 @@ document.addEventListener('alpine:init', () => {
                 this.close();
             };
 
+            this._onForeignDropdownTriggerPointerDown = (e) => {
+                if (!this.open) {
+                    return;
+                }
+
+                const t = e.target?.closest?.('[data-slot="dropdown-menu-trigger"]');
+
+                if (!t) {
+                    return;
+                }
+
+                const ref = this.$refs.reference;
+
+                if (ref && (t === ref || ref.contains(t))) {
+                    return;
+                }
+
+                this.close();
+            };
+
             document.addEventListener('pointerdown', this._onOutsidePointerDown, true);
             document.addEventListener('click', this._onOutsidePointerDown, true);
+            document.addEventListener('pointerdown', this._onForeignDropdownTriggerPointerDown, true);
         },
 
         _unbindOutsidePointerDown() {
-            if (!this._onOutsidePointerDown) {
-                return;
+            if (this._onOutsidePointerDown) {
+                document.removeEventListener('pointerdown', this._onOutsidePointerDown, true);
+                document.removeEventListener('click', this._onOutsidePointerDown, true);
+                this._onOutsidePointerDown = null;
             }
 
-            document.removeEventListener('pointerdown', this._onOutsidePointerDown, true);
-            document.removeEventListener('click', this._onOutsidePointerDown, true);
-            this._onOutsidePointerDown = null;
+            if (this._onForeignDropdownTriggerPointerDown) {
+                document.removeEventListener('pointerdown', this._onForeignDropdownTriggerPointerDown, true);
+                this._onForeignDropdownTriggerPointerDown = null;
+            }
         },
 
         init() {
