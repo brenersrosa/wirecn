@@ -14,7 +14,8 @@
         aria-invalid="true"
     @endif
     {{ $attributes->class(cn(
-        'flex-1 min-h-0 w-full resize-none rounded-none border-0 bg-transparent px-2.5 py-2 text-base outline-none shadow-none',
+        'box-border min-h-0 w-full min-w-0 max-w-full flex-1 resize-none rounded-none border-0 bg-transparent px-2.5 py-2 text-base outline-none shadow-none',
+        'whitespace-pre-wrap break-words',
         'placeholder:text-muted-foreground',
         'focus-visible:ring-0',
         'disabled:cursor-not-allowed disabled:bg-transparent disabled:opacity-50',

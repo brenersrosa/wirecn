@@ -9,7 +9,8 @@
 <textarea
     data-slot="textarea"
     {{ $attributes->merge($invalid ? ['aria-invalid' => 'true'] : [])->class(cn(
-        'field-sizing-content flex min-h-16 w-full rounded-md border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none',
+        'field-sizing-content box-border min-h-16 w-full min-w-0 max-w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none',
+        'whitespace-pre-wrap break-words',
         'placeholder:text-muted-foreground',
         'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
         'disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50',
