@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3.9] - 2026-04-28
+
+### Changed
+
+- **`x-wirecn.combobox.content` / `list`:** the panel body scrolls via **`x-wirecn.scroll-area`** (viewport carries **`listbox`**, **`x-bind:id="listId"`**, **`tabindex="-1"`**, same padding/scroll affordance classes as select); **`combobox-list`** drops **`max-h-60` / `overflow-y-auto`** so height is capped by the floating panel and scrolling stays in the scroll-area viewport.
+
 ## [1.0.3.8] - 2026-04-28
 
 ### Changed
