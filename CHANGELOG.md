@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3.16] - 2026-04-29
+
+### Changed
+
+- **`x-wirecn.dropdown-menu.content`:** matches combobox/select panel pattern — **`x-teleport="body"`**, **`wire:ignore`**, **`fixed`** / **`z-[100]`**, **`x-transition.opacity.duration.100ms`**, **`transitionend`** cleanup via **`uiDropdownMenu`** (**`stopPanelFloatingUpdates`**, **`clearPanelFloatingStyles`**, **`onFloatingPanelTransitionEnd`**), **`x-wirecn.scroll-area`** with **`role="menu"`** on the viewport, outer **`role="presentation"`**.
+
+### Removed
+
+- **`x-wirecn.dropdown-menu.portal`:** inlined teleport lives on **`content`**; remove the standalone portal stub (republish views if you still referenced it).
+
 ## [1.0.3.15] - 2026-04-29
 
 ### Fixed
